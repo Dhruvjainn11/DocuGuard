@@ -25,7 +25,6 @@ const uploadMiddleware = (req, res, next) => {
 
   uploadSingle(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      // A Multer-specific error (like file too large)
       return sendError(res, `Multer Error: ${err.message}`, 400);
     } else if (err) {
       // A custom error from our fileFilter

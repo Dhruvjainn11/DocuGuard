@@ -15,6 +15,7 @@ const DocumentSchema = new mongoose.Schema({
   processingStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
 
   extractedData: {
+    category: { type: String, default: 'OTHER' }, // NEW: 'ID_CARD', 'RECEIPT', etc.
     merchantName: String, 
     purchaseDate: Date,
     expiryDate: Date

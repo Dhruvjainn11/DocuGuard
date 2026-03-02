@@ -1,10 +1,29 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {uploadDocumentController} = require('../controllers/documentController');
+const {
+  uploadDocumentController,
+  getAllDocumentsController,
+  getSingleDocumentcontroller,
+  moveToTrashController,
+  getViewUrlController,
+  analyzeDocumentController,
+  saveDocumentController,
+} = require("../controllers/documentController");
+const { authMiddleware } = require("../middlewares/authMiddleware");
+const { uploadMiddleware } = require("../middlewares/uploadMiddleware");
 
-const {authMiddleware } = require('../middlewares/authMiddleware');
-const { uploadMiddleware } = require('../middlewares/uploadMiddleware'); 
+router.use(authMiddleware);
 
-router.post('/upload', authMiddleware, uploadMiddleware, uploadDocumentController);
+router.post(
+  "/upload",  
+  uploadMiddleware,
+  uploadDocumentController,
+);
+router.get("/",  getAllDocumentsController);
+router.get("/:id",  getSingleDocumentcontroller);
+router.delete("/:id",  moveToTrashController);
+router.get("/:id/view",  getViewUrlController);
+router.post("/analyze", uploadMiddleware, analyzeDocumentController);
+router.post("/save", uploadMiddleware, saveDocumentController);
 
 module.exports = router;

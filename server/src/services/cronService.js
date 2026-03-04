@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const Document = require('../models/Document');
+const { deleteFromCloudinary } = require('./fileService');
 
 // Helper function: Get the exact start and end of a day, X days from now
 const getTargetDateRange = (daysAhead) => {
@@ -45,11 +46,54 @@ const checkExpiringDocuments = async () => {
   }
 };
 
+// The core logic that empties the trash
+const cleanUpTrash = async () => {
+  try {    
+    // Calculate the exact date 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Find documents that were moved to the trash MORE than 30 days ago
+    const trashedDocs = await Document.find({
+      status: 'trash',
+      updatedAt: { $lte: thirtyDaysAgo } 
+    });
+
+    if (trashedDocs.length === 0) {
+      return console.log("✨ Trash is already clean.");
+    }
+
+    console.log(`🧹 Found ${trashedDocs.length} old document(s) to permanently delete.`);
+
+    let deletedCount = 0;
+
+    // Loop through and destroy them one by one
+    for (const doc of trashedDocs) {
+      // 1. Nuke it from Cloudinary (Saves money!)
+      const isDeletedFromCloud = await deleteFromCloudinary(doc.cloudinaryId);
+      
+      // 2. Nuke it from MongoDB (Saves space!)
+      if (isDeletedFromCloud) {
+        await Document.findByIdAndDelete(doc._id);
+        deletedCount++;
+      } else {
+        console.log(`⚠️ Failed to delete image from Cloudinary for doc: ${doc._id}`);
+      }
+    }
+
+    console.log(`🔥 Successfully destroyed ${deletedCount} document(s) permanently.`);
+  } catch (error) {
+    console.error("❌ Trash Cleanup Error:", error);
+  }
+};
+
 // The function that actually starts the timer
 const startCronJobs = () => {
   // Cron syntax: 'Minute Hour DayOfMonth Month DayOfWeek'
   // '0 8 * * *' means: At minute 0, past hour 8 (8:00 AM), every day, every month, every day of the week.
   cron.schedule('0 8 * * *', checkExpiringDocuments);
+
+  cron.schedule('0 2 * * *', cleanUpTrash);
   
   console.log("⚙️  Cron Jobs Initialized: Expiry scanner set for 8:00 AM daily.");
 };

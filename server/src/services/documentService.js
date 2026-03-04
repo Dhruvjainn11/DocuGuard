@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const AppError = require("../utils/appError");
 const { generateSignedUrl } = require("./fileService");
 const { extractDocumentData } = require("./aiService");
+const buildQuery = require("../utils/buildQuery");
 
 const createDocumentRecord = async (docData) => {
   const document = new Document(docData);
@@ -58,19 +59,36 @@ const uploadDocument = async (file, userId, title, aiService) => {
   return await createDocumentRecord(docData);
 };
 
-const getUserDocuments = async (userId, page = 1, limit = 10) => {
-  const skip = (page - 1) * limit;
+const getUserDocuments = async (userId, queryParams) => {
+  const sortableFields = {
+    title: "title",
+    date: "createdAt",
+    name: "title"
+  };
 
-  // We only fetch 'active' documents by default
-  const documents = await Document.find({ user: userId, status: "active" })
-    .sort({ createdAt: -1 })
-    .skip(skip)
+  const { sort, page, limit, offset } = buildQuery(
+    queryParams,
+    sortableFields,
+    queryParams.page,
+    queryParams.limit
+  );
+
+  const searchQuery = { user: userId, status: "active" };
+
+  if (queryParams.search) {
+    searchQuery.$or = [
+      { title: { $regex: queryParams.search, $options: "i" } },
+      { originalFilename: { $regex: queryParams.search, $options: "i" } },
+      { "extractedData.merchantName": { $regex: queryParams.search, $options: "i" } }
+    ];
+  }
+
+  const documents = await Document.find(searchQuery)
+    .sort(sort)
+    .skip(offset)
     .limit(limit);
 
-  const total = await Document.countDocuments({
-    user: userId,
-    status: "active",
-  });
+  const total = await Document.countDocuments(searchQuery);
 
   return {
     documents,

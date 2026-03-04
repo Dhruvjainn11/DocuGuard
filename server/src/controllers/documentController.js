@@ -5,7 +5,7 @@ const {
   getDocumentViewUrl,
   moveToTrash,
   analyzeDocumentOnly,
-  saveDocumentWithData
+  saveDocumentWithData,
 } = require("../services/documentService");
 const aiService = require("../services/aiService");
 const { sendSuccess, sendError } = require("../common/response");
@@ -16,29 +16,28 @@ const uploadDocumentController = async (req, res, next) => {
       return sendError(res, "Please upload a file", 400);
     }
 
-    
     const savedDocument = await uploadDocument(
       req.file,
       req.user.id,
       req.body.title,
-      aiService
+      aiService,
     );
 
-    return sendSuccess(res, "Document uploaded and analyzed", savedDocument, 201);
+    return sendSuccess(
+      res,
+      "Document uploaded and analyzed",
+      savedDocument,
+      201,
+    );
   } catch (error) {
     console.error("Upload Error:", error);
     next(error);
   }
 };
 
-const getAllDocumentsController = async (req, res,next) => {
+const getAllDocumentsController = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    
-
-    const result = await getUserDocuments(req.user.id, page, limit);
-
+    const result = await getUserDocuments(req.user.id, req.query);
     return sendSuccess(res, "Documents retrieved successfully", result);
   } catch (error) {
     next(error);
@@ -97,7 +96,11 @@ const saveDocumentController = async (req, res, next) => {
       return sendError(res, "File is required to save", 400);
     }
 
-    const savedDocument = await saveDocumentWithData(req.file, req.user.id, req.body);
+    const savedDocument = await saveDocumentWithData(
+      req.file,
+      req.user.id,
+      req.body,
+    );
     return sendSuccess(res, "Document saved successfully", savedDocument, 201);
   } catch (error) {
     console.error("Save Error:", error);

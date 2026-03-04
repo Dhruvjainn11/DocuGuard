@@ -32,14 +32,14 @@ const uploadToCloudinary = (buffer, folder = "DocuGaurd") => {
   });
 };
 
-const generateSignedUrl = (cloudinaryId,mimeType) => {
+const generateSignedUrl = (cloudinaryId, mimeType) => {
   // We use Cloudinary's built-in URL generator
 
-  let extension = mimeType.split('/')[1];
-  
+  let extension = mimeType.split("/")[1];
+
   // 2. Cloudinary prefers 'jpg' over 'jpeg'
-  if (extension === 'jpeg') extension = 'jpg';
-  
+  if (extension === "jpeg") extension = "jpg";
+
   return cloudinary.url(cloudinaryId, {
     secure: true,
     sign_url: true, // This adds the cryptographic signature
@@ -49,4 +49,21 @@ const generateSignedUrl = (cloudinaryId,mimeType) => {
   });
 };
 
-module.exports = { uploadToCloudinary, generateSignedUrl };
+const deleteFromCloudinary = async (cloudinaryId) => {
+  try {
+    // Cloudinary's built-in destroy method
+    const result = await cloudinary.uploader.destroy(cloudinaryId, {
+      invalidate: true,
+      type: "private", // Must match the upload type
+    });
+    return result.result === "ok";
+  } catch (error) {
+    console.error("Cloudinary Deletion Error:", error);
+    return false;
+  }
+};
+module.exports = {
+  uploadToCloudinary,
+  generateSignedUrl,
+  deleteFromCloudinary,
+};

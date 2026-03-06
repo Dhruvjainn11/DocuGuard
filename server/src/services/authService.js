@@ -1,3 +1,4 @@
+const user = require("../models/user");
 const User = require("../models/user");
 const AppError = require("../utils/appError");
 const bcrypt = require("bcryptjs");
@@ -53,4 +54,12 @@ const loginUser = async (email, password) => {
   }, token };
 };
 
-module.exports = { registerUser, loginUser };
+const logoutUser = async(userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError("User not found",404);
+
+  user.lastLogout = new Date();
+  await user.save();
+}
+
+module.exports = { registerUser, loginUser, logoutUser};

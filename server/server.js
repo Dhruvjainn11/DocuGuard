@@ -16,9 +16,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: '*', // Change this to your React app's URL/port
+  origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true // CRITICAL: This allows the React app to send the HttpOnly Cookie!
+  credentials: true
 }));
 
 app.get("/api/health", (req, res) => {

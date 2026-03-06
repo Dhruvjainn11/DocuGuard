@@ -73,7 +73,7 @@ const getUserDocuments = async (userId, queryParams) => {
     queryParams.limit
   );
 
-  const searchQuery = { user: userId, status: "active" };
+  const searchQuery = { user: userId, status: queryParams.status || "active" };
 
   if (queryParams.search) {
     searchQuery.$or = [
@@ -141,7 +141,9 @@ const analyzeDocumentOnly = async (file, userId) => {
 };
 
 const saveDocumentWithData = async (file, userId, formData) => {
-  const { title, category, merchantName, purchaseDate, expiryDate } = formData;
+  // First, parse the nested JSON data
+  const documentData = JSON.parse(formData.documentData);
+  const { title, category, merchantName, purchaseDate, expiryDate } = documentData;
   
   const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
   const existingDoc = await Document.findOne({ user: userId, fileHash });
@@ -153,7 +155,7 @@ const saveDocumentWithData = async (file, userId, formData) => {
   const cloudinaryResult = await uploadToCloudinary(file.buffer);
 
   const docData = {
-    title: title || file.originalname,
+    title: title || file.originalname, // Now uses the correct title from the form
     originalFilename: file.originalname,
     user: userId,
     cloudinaryId: cloudinaryResult.public_id,

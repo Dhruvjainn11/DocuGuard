@@ -1,5 +1,5 @@
 const { sendSuccess } = require("../common/response");
-const { registerUser, loginUser } = require("../services/authService");
+const { registerUser, loginUser, logoutUser } = require("../services/authService");
 
 const registerController = async (req, res, next) => {
   try {
@@ -30,4 +30,15 @@ const loginController = async (req, res, next) => {
   }
 };
 
-module.exports = { registerController, loginController };
+const logoutController = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    await logoutUser(userId);
+    res.clearCookie("token");
+    sendSuccess(res, "User logged out successfully", null, 200);
+  } catch (err) { 
+    next(err);
+  }
+}
+
+module.exports = { registerController, loginController, logoutController };

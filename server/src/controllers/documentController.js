@@ -4,6 +4,8 @@ const {
   getDocumentById,
   getDocumentViewUrl,
   moveToTrash,
+  restoreDocument,
+  permanentlyDeleteDocument,
   analyzeDocumentOnly,
   saveDocumentWithData,
 } = require("../services/documentService");
@@ -108,12 +110,32 @@ const saveDocumentController = async (req, res, next) => {
   }
 };
 
+const restoreDocumentController = async (req, res, next) => {
+  try {
+    const document = await restoreDocument(req.params.id, req.user.id);
+    return sendSuccess(res, 'Document restored to vault', document);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const permanentlyDeleteController = async (req, res, next) => {
+  try {
+    await permanentlyDeleteDocument(req.params.id, req.user.id);
+    return sendSuccess(res, 'Document permanently deleted', null);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadDocumentController,
   getAllDocumentsController,
   getSingleDocumentcontroller,
   getViewUrlController,
   moveToTrashController,
+  restoreDocumentController,
+  permanentlyDeleteController,
   analyzeDocumentController,
   saveDocumentController,
 };

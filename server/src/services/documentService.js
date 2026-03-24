@@ -1,5 +1,5 @@
 const Document = require("../models/Document");
-const { uploadToCloudinary } = require("./fileService");
+const { uploadToCloudinary, deleteFromCloudinary } = require("./fileService");
 const crypto = require("crypto");
 const AppError = require("../utils/appError");
 const { generateSignedUrl } = require("./fileService");
@@ -115,6 +115,24 @@ const getDocumentViewUrl = async (docId, userId) => {
   return generateSignedUrl(document.cloudinaryId, document.fileType);
 };
 
+const restoreDocument = async (docId, userId) => {
+  const document = await Document.findOneAndUpdate(
+    { _id: docId, user: userId, status: 'trash' },
+    { status: 'active' },
+    { new: true }
+  );
+  if (!document) throw new AppError('Document not found in trash', 404);
+  return document;
+};
+
+const permanentlyDeleteDocument = async (docId, userId) => {
+  const document = await Document.findOne({ _id: docId, user: userId, status: 'trash' });
+  if (!document) throw new AppError('Document not found in trash', 404);
+
+  await deleteFromCloudinary(document.cloudinaryId);
+  await Document.deleteOne({ _id: docId });
+};
+
 const moveToTrash = async (docId, userId) => {
   const document = await Document.findOneAndUpdate(
     { _id: docId, user: userId, status: "active" },
@@ -181,6 +199,8 @@ module.exports = {
   getDocumentById,
   getDocumentViewUrl,
   moveToTrash,
+  restoreDocument,
+  permanentlyDeleteDocument,
   analyzeDocumentOnly,
   saveDocumentWithData,
 };
